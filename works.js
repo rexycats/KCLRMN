@@ -114,6 +114,20 @@ const WORKS = [
     descEn:    "Calm in thousands of dots. Silence has texture.",
     seed: 4456, style: "dots"
   }
+  {
+  slug:      "highlander",
+  titleNl:   "Highlander",
+  titleEn:   "Highlander",
+  image:     "images/Highlander.png",
+  mat:       "Canvas",
+  matKey:    "canvas",
+  styles:    ["organisch"],
+  year:      "2025",
+  ar:        "3/4",
+  edition:   10,
+  descNl:    "Een Schotse hooglander in aquarel — wild van haar, zacht van blik. De bloemenkroon contrasteert met de rauwe kracht van het dier. Gedrukt op canvas straalt dit werk warmte en karakter uit.",
+  descEn:    "A Scottish Highland cow in watercolour — wild of hair, gentle of gaze. The flower crown contrasts with the raw power of the animal. Printed on canvas, this piece radiates warmth and character.",
+},
 ];
 
 /* ════════════════════════════════════════════════════
