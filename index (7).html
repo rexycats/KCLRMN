@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KCLRMN — Digitale Kunstprints op Maat</title>
+<meta name="description" content="KCLRMN maakt digitale kunst geprint op canvas, acryl of aluminium — elk formaat, exclusief op maat.">
+<meta name="theme-color" content="#f9f7f4">
+<meta property="og:type"        content="website">
+<meta property="og:url"         content="https://www.junda.nl/">
+<meta property="og:title"       content="KCLRMN — Digitale Kunstprints op Maat">
+<meta property="og:description" content="Exclusieve digitale kunstprints op canvas, acryl of aluminium.">
+<meta property="og:image"       content="https://www.junda.nl/images/og-cover.jpg">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23f9f7f4'/><text y='78' x='50' text-anchor='middle' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='%2317130e'>K</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="works.js"></script>
+<style>
+:root{
+  --ink:#17130e;--ink-mid:#524b45;--ink-faint:#7a7268;
+  --bg:#f9f7f4;--bg2:#f0ebe3;--rule:#e2dbd1;
+  --blue:#8ec8e0;--blue-d:#3a96bc;--blue-t:#e4f2f9;
+  --white:#ffffff;--nav-h:62px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:'Outfit',sans-serif;font-weight:400;overflow-x:hidden;cursor:none;-webkit-font-smoothing:antialiased}
+a,button{cursor:none;text-decoration:none;color:inherit}
+canvas,img{display:block}
+img{width:100%;height:100%;object-fit:cover}
+
+/* CURSOR */
+#cur{position:fixed;z-index:9000;width:8px;height:8px;border-radius:50%;background:var(--ink);pointer-events:none;transform:translate(-50%,-50%);transition:width .2s,height .2s,background .2s;mix-blend-mode:multiply}
+#cur.big{width:44px;height:44px;background:var(--blue)}
+@media(pointer:coarse){#cur{display:none}}
+
+/* LOADER */
+#loader{position:fixed;inset:0;z-index:900;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;transition:opacity .5s}
+#loader.out{opacity:0;pointer-events:none}
+.l-name{font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(52px,11vw,110px);letter-spacing:.04em;color:var(--ink);clip-path:inset(0 100% 0 0);animation:clipIn .95s .1s cubic-bezier(.77,0,.175,1) forwards}
+.l-rule{width:0;height:1px;background:var(--blue);animation:lineW .55s .85s ease forwards}
+@keyframes clipIn{to{clip-path:inset(0 0 0 0)}}
+@keyframes lineW{to{width:60px}}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(249,247,244,.97);backdrop-filter:blur(16px);border-bottom:1px solid transparent;transition:border-color .3s;height:var(--nav-h)}
+nav.scrolled{border-color:var(--rule)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:100%;padding:0 48px;gap:24px}
+.nav-logo{font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:19px;letter-spacing:.04em;color:var(--ink);transition:color .2s;flex-shrink:0}
+.nav-logo:hover{color:var(--blue-d)}
+.nav-links{display:flex;align-items:center;gap:28px;list-style:none}
+.nav-links a,.nav-links button{font-size:12px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mid);background:none;border:none;transition:color .2s;padding:0;white-space:nowrap;line-height:1}
+.nav-links a:hover,.nav-links button:hover{color:var(--ink)}
+.nav-links .active-link{color:var(--ink);border-bottom:1px solid var(--ink);padding-bottom:2px}
+.nav-cta{padding:9px 20px;background:var(--ink);color:var(--bg)!important;font-size:12px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;transition:background .2s;white-space:nowrap}
+.nav-cta:hover{background:var(--blue-d)!important;color:var(--white)!important}
+.nav-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.nav-lang{font-size:12px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);background:none;border:1px solid var(--rule);padding:6px 10px;transition:color .2s,border-color .2s}
+.nav-lang:hover{color:var(--ink);border-color:var(--ink-mid)}
+.nav-burger{display:none;flex-direction:column;justify-content:center;gap:5px;width:36px;height:36px;background:none;border:none;padding:4px}
+.nav-burger span{width:22px;height:1.5px;background:var(--ink);transition:transform .3s,opacity .3s;display:block}
+.nav-burger.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.nav-burger.open span:nth-child(2){opacity:0}
+.nav-burger.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+.nav-drawer{position:fixed;top:var(--nav-h);left:0;right:0;background:rgba(249,247,244,.98);backdrop-filter:blur(16px);border-bottom:1px solid var(--rule);padding:24px 24px 28px;display:flex;flex-direction:column;transform:translateY(-110%);transition:transform .35s cubic-bezier(.4,0,.2,1);z-index:190}
+.nav-drawer.open{transform:translateY(0)}
+.nav-drawer a,.nav-drawer button{font-size:15px;font-weight:400;letter-spacing:.1em;color:var(--ink-mid);background:none;border:none;padding:14px 0;border-bottom:1px solid var(--rule);text-align:left;transition:color .2s}
+.nav-drawer a:last-child,.nav-drawer button:last-child{border-bottom:none}
+.nav-drawer a:hover,.nav-drawer button:hover{color:var(--ink)}
+.nav-drawer .drawer-cta{margin-top:16px;display:inline-block;padding:13px 28px;background:var(--ink);color:var(--bg)!important;font-size:13px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;text-align:center;border:none;transition:background .2s}
+.nav-drawer .drawer-cta:hover{background:var(--blue-d)!important}
+
+/* PAGES */
+.page{display:none}
+.page.active{display:block}
+
+/* HERO */
+#hero{padding:96px 48px 52px;text-align:center;border-bottom:1px solid var(--rule);display:flex;flex-direction:column;align-items:center}
+.hero-eyebrow{font-size:12px;font-weight:400;letter-spacing:.28em;text-transform:uppercase;color:var(--blue-d);margin-bottom:20px;opacity:0;animation:up .5s 1.9s ease forwards}
+.hero-name{font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(56px,9vw,110px);line-height:1.0;letter-spacing:-.01em;color:var(--ink);opacity:0;animation:up .8s 2.1s ease forwards}
+.hero-name em{display:block;font-style:italic;font-weight:400;color:var(--blue-d)}
+.hero-rule{width:28px;height:1px;background:var(--blue);margin:24px auto;opacity:0;animation:up .4s 2.3s ease forwards}
+.hero-body{font-family:'Playfair Display',serif;font-style:italic;font-weight:400;font-size:clamp(15px,1.4vw,18px);line-height:1.8;color:var(--ink-mid);max-width:460px;margin-bottom:32px;opacity:0;animation:up .7s 2.3s ease forwards}
+.hero-actions{display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center;opacity:0;animation:up .6s 2.5s ease forwards}
+.btn-solid{display:inline-block;padding:14px 40px;background:var(--ink);color:var(--bg);font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;transition:background .25s}
+.btn-solid:hover{background:var(--blue-d)}
+.btn-ghost{font-size:12px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-mid);border-bottom:1px solid var(--rule);padding-bottom:2px;transition:color .2s,border-color .2s}
+.btn-ghost:hover{color:var(--ink);border-color:var(--ink-mid)}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* GALLERY WALK */
+#gallery-walk{padding:56px 0 72px}
+.gw-header{padding:0 48px 32px;display:flex;align-items:baseline;justify-content:space-between}
+.sup{font-size:11px;font-weight:400;letter-spacing:.28em;text-transform:uppercase;color:var(--blue-d);margin-bottom:6px}
+.section-h{font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(28px,3.2vw,44px);line-height:1.05;color:var(--ink)}
+.section-h em{font-style:italic;font-weight:400}
+.gw-outer{overflow:hidden}
+.gw-track{display:flex;align-items:stretch;gap:3px;padding:0 48px;will-change:transform;user-select:none}
+.gi{flex:0 0 auto;position:relative;overflow:hidden;background:var(--bg2);transition:width .45s cubic-bezier(.4,0,.2,1)}
+.gi canvas,.gi img{width:100%;height:100%;display:block;pointer-events:none;object-fit:cover}
+.gi.p{width:clamp(200px,22vw,320px);aspect-ratio:3/4}
+.gi.l{width:clamp(320px,38vw,540px);aspect-ratio:16/10}
+.gi.t{width:clamp(180px,18vw,260px);aspect-ratio:2/3}
+.gi.sq{width:clamp(240px,26vw,360px);aspect-ratio:1}
+.gi.p:hover{width:clamp(260px,28vw,400px)}
+.gi.l:hover{width:clamp(380px,44vw,600px)}
+.gi.t:hover{width:clamp(220px,22vw,320px)}
+.gi.sq:hover{width:clamp(280px,30vw,420px)}
+.gi-over{position:absolute;inset:0;background:rgba(23,19,14,0);display:flex;flex-direction:column;justify-content:flex-end;padding:24px 20px;transition:background .35s}
+.gi:hover .gi-over{background:rgba(23,19,14,.62)}
+.gi-info{opacity:0;transform:translateY(10px);transition:opacity .35s,transform .35s}
+.gi:hover .gi-info{opacity:1;transform:none}
+.gi-name{font-family:'Playfair Display',serif;font-style:italic;font-weight:400;font-size:20px;color:var(--white);display:block;margin-bottom:4px}
+.gi-mat{font-size:12px;font-weight:400;letter-spacing:.15em;text-transform:uppercase;color:var(--blue);display:block;margin-bottom:14px}
+.gi-btns{display:flex;gap:8px}
+.gi-view{padding:9px 18px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.4);font-size:12px;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:var(--white);transition:background .2s,border-color .2s}
+.gi-view:hover{background:rgba(255,255,255,.24);border-color:rgba(255,255,255,.6)}
+.gi-order{padding:9px 18px;background:var(--blue);font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);transition:background .2s;border:none}
+.gi-order:hover{background:var(--white)}
+.gw-hint{padding:20px 48px 0;display:flex;align-items:center;gap:12px;font-size:12px;font-weight:400;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+.hint-dash{width:24px;height:1px;background:linear-gradient(90deg,var(--blue-d),transparent)}
+
+/* CALCULATOR */
+#calculator{border-top:1px solid var(--rule);padding:80px 48px;background:var(--bg)}
+.calc-inner{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
+.calc-sup{font-size:11px;font-weight:400;letter-spacing:.28em;text-transform:uppercase;color:var(--blue-d);margin-bottom:8px}
+.calc-title{font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(28px,3.5vw,48px);line-height:1.0;color:var(--ink);margin-bottom:10px}
+.calc-title em{font-style:italic;font-weight:400;color:var(--blue-d)}
+.calc-sub{font-family:'Playfair Display',serif;font-style:italic;font-weight:400;font-size:16px;line-height:1.75;color:var(--ink-mid);margin-bottom:36px;max-width:400px}
+.calc-field-label{font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mid);display:block;margin-bottom:8px}
+.calc-work-wrap{margin-bottom:28px}
+.size-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-bottom:6px}
+.size-btn{padding:13px 6px;border:1px solid var(--rule);background:none;font-size:12px;font-weight:400;color:var(--ink-mid);transition:all .2s;text-align:center;line-height:1.4}
+.size-btn:hover{border-color:var(--ink-mid);color:var(--ink)}
+.size-btn.active{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.size-btn .sb-cm{display:block;font-size:11px;margin-bottom:3px}
+.size-btn .sb-price{display:block;font-family:'Playfair Display',serif;font-weight:700;font-size:14px}
+.size-btn.active .sb-price{color:var(--blue)}
+.custom-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-bottom:28px}
+.custom-x{font-size:18px;color:var(--ink-faint);text-align:center;padding-top:24px}
+.mat-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-bottom:0}
+.mat-tab{padding:14px 6px;border:1px solid var(--rule);background:none;font-size:11px;font-weight:400;letter-spacing:.08em;color:var(--ink-mid);transition:all .2s;text-align:center;line-height:1.4}
+.mat-tab:hover{border-color:var(--ink-mid);color:var(--ink)}
+.mat-tab.active{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.mat-tab .mt-name{display:block;font-weight:500;font-size:12px;margin-bottom:3px}
+.mat-tab .mt-pct{display:block;font-size:10px;opacity:.6}
+.mat-tab.active .mt-pct{opacity:.7;color:var(--blue)}
+/* result */
+.calc-result{background:var(--bg2);border:1px solid var(--rule);padding:40px 36px;position:sticky;top:calc(var(--nav-h) + 20px)}
+.cr-label{font-size:10px;font-weight:400;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:20px;display:block}
+.cr-preview{aspect-ratio:4/3;overflow:hidden;background:var(--bg2);border:1px solid var(--rule);margin-bottom:24px;position:relative}
+.cr-preview canvas,.cr-preview img{width:100%;height:100%;display:block;object-fit:cover}
+.cr-work{font-family:'Playfair Display',serif;font-weight:700;font-size:21px;color:var(--ink);margin-bottom:4px}
+.cr-mat{font-size:12px;font-weight:400;letter-spacing:.15em;text-transform:uppercase;color:var(--blue-d);margin-bottom:3px}
+.cr-size{font-size:13px;color:var(--ink-faint);margin-bottom:6px}
+.cr-matdesc{font-family:'Playfair Display',serif;font-style:italic;font-size:14px;color:var(--ink-mid);margin-bottom:24px;line-height:1.6}
+.cr-price-row{display:flex;align-items:baseline;justify-content:space-between;padding:18px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-bottom:16px}
+.cr-price-lbl{font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mid)}
+.cr-price{font-family:'Playfair Display',serif;font-weight:700;font-size:40px;color:var(--ink);letter-spacing:-.01em}
+.cr-price sup{font-size:20px;vertical-align:super;margin-right:1px}
+.cr-edition{font-size:12px;color:var(--ink-faint);margin-bottom:24px;line-height:1.7}
+.cr-edition strong{color:var(--ink-mid);font-weight:500}
+.btn-calc-go{display:block;width:100%;padding:16px;background:var(--ink);color:var(--bg);font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;border:none;transition:background .25s;text-align:center}
+.btn-calc-go:hover{background:var(--blue-d)}
+
+/* ORDER */
+#order{border-top:1px solid var(--rule);display:grid;grid-template-columns:3fr 2fr}
+.order-left{padding:68px 52px;border-right:1px solid var(--rule)}
+.order-sup{font-size:11px;font-weight:400;letter-spacing:.26em;text-transform:uppercase;color:var(--blue-d);margin-bottom:8px}
+.order-title{font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(28px,3.5vw,48px);line-height:1.0;color:var(--ink);margin-bottom:32px}
+.order-title em{font-style:italic;font-weight:400;color:var(--blue-d)}
+.form{display:flex;flex-direction:column;gap:16px}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.f-g{display:flex;flex-direction:column;gap:6px}
+.f-l{font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mid)}
+.f-i,.f-s,.f-t{font-family:'Outfit',sans-serif;font-weight:400;font-size:14px;color:var(--ink);background:var(--bg2);border:1px solid var(--rule);padding:12px 16px;outline:none;width:100%;appearance:none;transition:border-color .2s,background .2s}
+.f-i:focus,.f-s:focus,.f-t:focus{border-color:var(--blue-d);background:var(--white);box-shadow:0 0 0 3px rgba(58,150,188,.1)}
+.f-i::placeholder,.f-t::placeholder{color:var(--ink-faint)}
+.f-t{min-height:88px;resize:vertical}
+.form-success{display:none;padding:20px 24px;background:var(--blue-t);border:1px solid var(--blue);font-size:14px;line-height:1.7;color:var(--ink-mid)}
+.form-success.show{display:block}
+.btn-send{font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;background:var(--ink);color:var(--bg);border:none;padding:15px 44px;align-self:flex-start;transition:background .25s,opacity .2s}
+.btn-send:hover{background:var(--blue-d)}
+.btn-send:disabled{opacity:.5}
+.order-right{padding:68px 40px;background:var(--bg2)}
+.or-label{font-size:11px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--blue-d);margin-bottom:16px;display:block}
+.mat-list{margin-bottom:40px}
+.mat-r{display:flex;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--rule);position:relative;overflow:hidden}
+.mat-r:first-child{border-top:1px solid var(--rule)}
+.mat-r::before{content:'';position:absolute;left:0;top:0;bottom:0;width:0;background:var(--blue-d);transition:width .25s}
+.mat-r:hover::before{width:2px}
+.mn{font-family:'Playfair Display',serif;font-style:italic;font-size:12px;color:var(--blue-d);width:22px;flex-shrink:0}
+.mname{font-family:'Playfair Display',serif;font-weight:700;font-size:16px;color:var(--ink);flex:1}
+.mtag{font-size:10px;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:var(--blue-d);border:1px solid var(--blue);padding:3px 9px}
+.facts{}
+.fact{display:flex;justify-content:space-between;align-items:baseline;padding:13px 0;border-bottom:1px solid var(--rule);gap:12px}
+.fact:first-child{border-top:1px solid var(--rule)}
+.fk{font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-faint)}
+.fv{font-family:'Playfair Display',serif;font-weight:400;font-size:15px;color:var(--ink);text-align:right;transition:color .2s}
+a.fv:hover{color:var(--blue-d)}
+
+/* ABOUT */
+#about-s{padding:88px 48px;border-top:1px solid var(--rule);display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+.about-img{position:relative}
+.about-cv{aspect-ratio:4/5;overflow:hidden;background:var(--bg2)}
+#aboutCv{width:100%;height:100%;display:block;object-fit:cover}
+.about-deco{position:absolute;bottom:-16px;right:-16px;width:65%;height:65%;border:1px solid var(--blue);z-index:-1}
+.asup{font-size:11px;font-weight:400;letter-spacing:.28em;text-transform:uppercase;color:var(--blue-d);margin-bottom:12px}
+.ah{font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(26px,3vw,42px);line-height:1.1;color:var(--ink);margin-bottom:20px}
+.ah em{font-style:italic;font-weight:400;color:var(--blue-d)}
+.ap{font-family:'Playfair Display',serif;font-style:italic;font-weight:400;font-size:17px;line-height:1.8;color:var(--ink-mid);border-left:2px solid var(--blue);padding-left:20px;margin-bottom:16px}
+.ab{font-size:14px;line-height:1.9;color:var(--ink-mid);margin-bottom:24px}
+.asig{font-family:'Playfair Display',serif;font-style:italic;font-size:28px;color:var(--ink);opacity:.18}
+
+/* PROCESS */
+#proc-s{padding:72px 48px;border-top:1px solid var(--rule);background:var(--bg2)}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;margin-top:44px}
+.si{font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:var(--blue-d);display:block;margin-bottom:10px}
+.st{font-family:'Playfair Display',serif;font-weight:700;font-size:17px;color:var(--ink);margin-bottom:8px;line-height:1.15}
+.sb{font-size:14px;line-height:1.85;color:var(--ink-mid)}
+
+/* FOOTER */
+footer{border-top:1px solid var(--rule);padding:28px 48px;display:flex;align-items:center;justify-content:space-between}
+.flogo{font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:16px;color:var(--ink)}
+.fcopy{font-size:12px;color:var(--ink-faint)}
+
+/* GALLERY PAGE */
+#page-gallery{padding-top:var(--nav-h);min-height:100svh}
+.gal-hero{padding:48px 48px 36px;border-bottom:1px solid var(--rule);display:flex;align-items:flex-end;justify-content:space-between;gap:32px;flex-wrap:wrap}
+.gal-title{font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(36px,5vw,68px);line-height:1.0;color:var(--ink)}
+.gal-title em{font-style:italic;font-weight:400}
+.gal-meta{font-size:13px;font-weight:400;color:var(--ink-faint);margin-top:6px}
+.filter-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:20px 48px;border-bottom:1px solid var(--rule);background:rgba(249,247,244,.97);backdrop-filter:blur(10px);position:sticky;top:var(--nav-h);z-index:10}
+.filter-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.filter-divider{width:1px;height:20px;background:var(--rule);margin:0 10px;align-self:center}
+.filter-label{font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mid);margin-right:6px;white-space:nowrap}
+.f-chip{font-size:12px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;padding:7px 18px;border:1px solid var(--rule);background:none;color:var(--ink-mid);transition:all .2s;white-space:nowrap}
+.f-chip:hover{border-color:var(--ink-mid);color:var(--ink)}
+.f-chip.active{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.gal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px}
+.gal-item{position:relative;overflow:hidden;background:var(--bg2);aspect-ratio:var(--ar,1);transition:opacity .3s}
+.gal-item.hidden{display:none}
+.gal-item canvas,.gal-item img{width:100%;height:100%;display:block;pointer-events:none;object-fit:cover}
+.gal-over{position:absolute;inset:0;background:rgba(23,19,14,0);display:flex;flex-direction:column;justify-content:space-between;padding:20px;transition:background .35s}
+.gal-item:hover .gal-over{background:rgba(23,19,14,.65)}
+.gal-badge{display:flex;gap:6px;flex-wrap:wrap;opacity:0;transform:translateY(-6px);transition:opacity .3s,transform .3s}
+.gal-item:hover .gal-badge{opacity:1;transform:none}
+.badge{font-size:11px;font-weight:400;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.5);color:rgba(255,255,255,.95)}
+.gal-foot{display:flex;flex-direction:column;opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s}
+.gal-item:hover .gal-foot{opacity:1;transform:none}
+.gal-n{font-family:'Playfair Display',serif;font-style:italic;font-weight:400;font-size:19px;color:var(--white);display:block;margin-bottom:3px}
+.gal-m{font-size:12px;font-weight:400;letter-spacing:.15em;text-transform:uppercase;color:var(--blue);display:block;margin-bottom:12px}
+.gal-actions{display:flex;gap:8px}
+.gal-view{padding:9px 16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.45);font-size:12px;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:var(--white);transition:background .2s}
+.gal-view:hover{background:rgba(255,255,255,.25)}
+.gal-order{padding:9px 16px;background:var(--blue);border:none;font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);transition:background .2s}
+.gal-order:hover{background:var(--white)}
+.gal-empty{grid-column:1/-1;padding:80px;text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:20px;color:var(--ink-mid);display:none}
+
+/* WORK PAGE */
+#page-work{padding-top:var(--nav-h);min-height:100svh}
+.work-layout{display:grid;grid-template-columns:3fr 2fr;min-height:calc(100svh - var(--nav-h))}
+.work-img{position:relative;overflow:hidden;background:var(--bg2)}
+#wkCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover}
+.work-info{padding:48px 44px;border-left:1px solid var(--rule);display:flex;flex-direction:column;overflow-y:auto}
+.wk-breadcrumb{display:flex;align-items:center;justify-content:space-between;margin-bottom:36px}
+.wk-back{font-size:12px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);display:flex;align-items:center;gap:8px;background:none;border:none;transition:color .2s}
+.wk-back:hover{color:var(--ink)}
+.wk-counter{font-size:12px;font-weight:400;color:var(--ink-faint);font-family:'Playfair Display',serif;font-style:italic}
+.wk-sup{font-size:11px;font-weight:500;letter-spacing:.24em;text-transform:uppercase;color:var(--blue-d);margin-bottom:10px}
+.wk-title{font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(30px,4vw,50px);line-height:1.0;color:var(--ink);margin-bottom:6px}
+.wk-year{font-family:'Playfair Display',serif;font-style:italic;font-size:14px;color:var(--ink-faint);margin-bottom:24px}
+.wk-desc{font-family:'Playfair Display',serif;font-style:italic;font-weight:400;font-size:16px;line-height:1.85;color:var(--ink-mid);margin-bottom:28px}
+.wk-specs{display:flex;flex-direction:column;margin-bottom:36px}
+.wk-spec{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--rule);gap:12px}
+.wk-spec:first-child{border-top:1px solid var(--rule)}
+.wsk{font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint)}
+.wsv{font-family:'Playfair Display',serif;font-size:15px;color:var(--ink);text-align:right}
+.wk-cta{display:inline-block;padding:15px 40px;background:var(--ink);color:var(--bg);font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;transition:background .25s;margin-bottom:14px;align-self:flex-start;border:none}
+.wk-cta:hover{background:var(--blue-d)}
+.wk-note{font-size:13px;color:var(--ink-mid);line-height:1.75}
+.wk-nav{display:flex;gap:12px;margin-top:auto;padding-top:28px;border-top:1px solid var(--rule)}
+.wk-prev,.wk-next{font-size:12px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mid);background:none;border:none;transition:color .2s;display:flex;align-items:center;gap:7px}
+.wk-prev:hover,.wk-next:hover{color:var(--ink)}
+.wk-next{margin-left:auto}
+
+/* REVEAL */
+.rev{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+.rev.in{opacity:1;transform:none}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}
+
+/* MOBILE */
+@media(max-width:820px){
+  :root{--nav-h:56px}
+  .nav-inner{padding:0 20px}
+  .nav-links{display:none}
+  .nav-burger{display:flex}
+  #hero{padding:80px 20px 44px}
+  .gw-header,.gw-hint{padding-left:20px;padding-right:20px}
+  .gw-track{padding:0 20px}
+  #calculator{padding:60px 20px}
+  .calc-inner{grid-template-columns:1fr;gap:44px}
+  .size-grid{grid-template-columns:repeat(3,1fr)}
+  .mat-tabs{grid-template-columns:repeat(2,1fr)}
+  .calc-result{position:static}
+  #order{grid-template-columns:1fr}
+  .order-left{padding:52px 20px;border-right:none;border-bottom:1px solid var(--rule)}
+  .order-right{padding:48px 20px}
+  .f-row{grid-template-columns:1fr}
+  #about-s{grid-template-columns:1fr;gap:44px;padding:68px 20px}
+  .about-deco{display:none}
+  #proc-s{padding:60px 20px}
+  .steps{grid-template-columns:1fr 1fr;gap:20px}
+  footer{flex-direction:column;gap:12px;text-align:center;padding:20px}
+  .gal-hero{padding:36px 20px 24px}
+  .filter-bar{padding:14px 20px;top:56px}
+  .gal-grid{grid-template-columns:repeat(2,1fr)}
+  .work-layout{grid-template-columns:1fr}
+  .work-img{height:55vw;min-height:240px}
+  .work-info{padding:36px 20px;border-left:none;border-top:1px solid var(--rule)}
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+
+<div id="loader"><div class="l-name">KCLRMN</div><div class="l-rule"></div></div>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <div class="nav-inner">
+    <a class="nav-logo" onclick="route('home')">KCLRMN</a>
+    <ul class="nav-links">
+      <li><button onclick="route('gallery')" id="nav-gallery" data-nl="Werken" data-en="Works">Werken</button></li>
+      <li><button onclick="scrollToSection('calculator')" data-nl="Prijzen" data-en="Prices">Prijzen</button></li>
+      <li><button onclick="scrollToSection('about-s')" data-nl="Over mij" data-en="About">Over mij</button></li>
+      <li><a onclick="scrollToSection('order')" class="nav-cta" data-nl="Bestel een print" data-en="Order a print">Bestel een print</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="nav-lang" id="langBtn">EN</button>
+      <button class="nav-burger" id="burgerBtn" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="nav-drawer" id="navDrawer">
+  <button onclick="route('gallery');closeDrawer()" data-nl="Werken" data-en="Works">Werken</button>
+  <button onclick="scrollToSection('calculator');closeDrawer()" data-nl="Prijzen" data-en="Prices">Prijzen</button>
+  <button onclick="scrollToSection('about-s');closeDrawer()" data-nl="Over mij" data-en="About">Over mij</button>
+  <a onclick="scrollToSection('order');closeDrawer()" class="drawer-cta" data-nl="Bestel een print" data-en="Order a print">Bestel een print</a>
+</div>
+
+<!-- ══ HOME ══════════════════════════════════ -->
+<div class="page active" id="page-home">
+
+  <section id="hero">
+    <p class="hero-eyebrow" data-nl="Digitale kunst · Exclusieve prints op maat" data-en="Digital art · Exclusive custom prints">Digitale kunst · Exclusieve prints op maat</p>
+    <h1 class="hero-name">KCL<em>RMN</em></h1>
+    <div class="hero-rule"></div>
+    <p class="hero-body" data-nl="Elk werk geprint op canvas, acryl of aluminium — elke maat, gemaakt voor jouw ruimte." data-en="Every piece printed on canvas, acrylic or aluminium — any size, made for your space.">Elk werk geprint op canvas, acryl of aluminium — elke maat, gemaakt voor jouw ruimte.</p>
+    <div class="hero-actions">
+      <a onclick="scrollToSection('order')" class="btn-solid" data-nl="Bestel een print" data-en="Order a print">Bestel een print</a>
+      <a onclick="route('gallery')" class="btn-ghost" data-nl="Bekijk de werken" data-en="Browse the works">Bekijk de werken</a>
+    </div>
+  </section>
+
+  <section id="gallery-walk">
+    <div class="gw-header rev">
+      <div>
+        <p class="sup" data-nl="Collectie" data-en="Collection">Collectie</p>
+        <h2 class="section-h" data-nl="De <em>werken</em>" data-en="The <em>works</em>">De <em>werken</em></h2>
+      </div>
+      <button onclick="route('gallery')" class="btn-ghost rev d2" data-nl="Alle werken →" data-en="All works →">Alle werken →</button>
+    </div>
+    <div class="gw-outer" id="gwOuter"><div class="gw-track" id="gwTrack"></div></div>
+    <div class="gw-hint rev">
+      <div class="hint-dash"></div>
+      <span data-nl="← Sleep of scroll om te wandelen →" data-en="← Drag or scroll to walk →">← Sleep of scroll om te wandelen →</span>
+    </div>
+  </section>
+
+  <!-- CALCULATOR -->
+  <section id="calculator">
+    <div class="calc-inner">
+      <div class="rev">
+        <p class="calc-sup" data-nl="Prijscalculator" data-en="Price calculator">Prijscalculator</p>
+        <h2 class="calc-title" data-nl="Wat kost <em>jouw print?</em>" data-en="What does <em>your print cost?</em>">Wat kost <em>jouw print?</em></h2>
+        <p class="calc-sub" data-nl="Kies een werk, formaat en materiaal. De prijs verschijnt direct." data-en="Choose a piece, size and material. The price appears instantly.">Kies een werk, formaat en materiaal. De prijs verschijnt direct.</p>
+
+        <div class="calc-work-wrap">
+          <span class="calc-field-label" data-nl="Werk" data-en="Piece">Werk</span>
+          <select class="f-s" id="calcWorkSel" onchange="calcUpdate()"></select>
+        </div>
+
+        <span class="calc-field-label" data-nl="Formaat" data-en="Size">Formaat</span>
+        <div class="size-grid" id="sizeGrid"></div>
+        <div style="margin-bottom:28px"></div>
+
+        <span class="calc-field-label" data-nl="Of een eigen maat (cm)" data-en="Or a custom size (cm)">Of een eigen maat (cm)</span>
+        <div class="custom-row">
+          <div>
+            <span class="calc-field-label" data-nl="Breedte" data-en="Width">Breedte</span>
+            <input type="number" class="f-i" id="calcW" min="20" max="300" placeholder="80" oninput="calcCustom()">
+          </div>
+          <span class="custom-x">×</span>
+          <div>
+            <span class="calc-field-label" data-nl="Hoogte" data-en="Height">Hoogte</span>
+            <input type="number" class="f-i" id="calcH" min="20" max="300" placeholder="120" oninput="calcCustom()">
+          </div>
+        </div>
+
+        <span class="calc-field-label" data-nl="Materiaal" data-en="Material">Materiaal</span>
+        <div class="mat-tabs" id="matTabs"></div>
+      </div>
+
+      <div class="calc-result rev d1">
+        <span class="cr-label" data-nl="Jouw selectie" data-en="Your selection">Jouw selectie</span>
+        <div class="cr-preview" id="calcPreview"></div>
+        <div class="cr-work"    id="calcWorkName">—</div>
+        <div class="cr-mat"     id="calcMatName">—</div>
+        <div class="cr-size"    id="calcSizeName">—</div>
+        <div class="cr-matdesc" id="calcMatDesc">—</div>
+        <div class="cr-price-row">
+          <span class="cr-price-lbl" data-nl="Prijs" data-en="Price">Prijs</span>
+          <span class="cr-price"><sup>€</sup><span id="calcPriceNum">—</span></span>
+        </div>
+        <p class="cr-edition" id="calcEdition"></p>
+        <button class="btn-calc-go" onclick="calcOrder()"
+          data-nl="Bestel deze print" data-en="Order this print">Bestel deze print</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ORDER -->
+  <section id="order">
+    <div class="order-left rev">
+      <p class="order-sup" data-nl="Bestel een print" data-en="Order a print">Bestel een print</p>
+      <h2 class="order-title" data-nl="Jouw werk,<br><em>jouw keuze</em>" data-en="Your piece,<br><em>your choice</em>">Jouw werk,<br><em>jouw keuze</em></h2>
+      <form class="form" id="orderForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+        <div class="f-row">
+          <div class="f-g"><label class="f-l" data-nl="Naam" data-en="Name">Naam</label><input type="text" name="naam" class="f-i" placeholder="Jouw naam" required></div>
+          <div class="f-g"><label class="f-l">Email</label><input type="email" name="email" class="f-i" placeholder="jij@example.be" required></div>
+        </div>
+        <div class="f-g">
+          <label class="f-l" data-nl="Welk werk?" data-en="Which piece?">Welk werk?</label>
+          <select name="werk" class="f-s" id="workSel"></select>
+        </div>
+        <div class="f-row">
+          <div class="f-g">
+            <label class="f-l" data-nl="Materiaal" data-en="Material">Materiaal</label>
+            <select name="materiaal" class="f-s" id="orderMatSel">
+              <option value="canvas">Canvas</option>
+              <option value="acryl">Acrylglas</option>
+              <option value="aluminium">Aluminium</option>
+            </select>
+          </div>
+          <div class="f-g"><label class="f-l" data-nl="Formaat (b×h cm)" data-en="Size (w×h cm)">Formaat (b×h cm)</label><input type="text" name="formaat" id="orderFmtInput" class="f-i" placeholder="bv. 80 × 60"></div>
+        </div>
+        <div class="f-g"><label class="f-l" data-nl="Opmerkingen" data-en="Remarks">Opmerkingen</label><textarea name="opmerkingen" class="f-t" placeholder="Speciale wensen, vragen..."></textarea></div>
+        <div class="form-success" id="formSuccess">✓ <span data-nl="Aanvraag ontvangen! Ik neem zo snel mogelijk contact op." data-en="Request received! I'll get in touch as soon as possible.">Aanvraag ontvangen! Ik neem zo snel mogelijk contact op.</span></div>
+        <button type="submit" class="btn-send" id="formBtn" data-nl="Verstuur aanvraag" data-en="Send request">Verstuur aanvraag</button>
+      </form>
+    </div>
+    <div class="order-right rev d1">
+      <span class="or-label" data-nl="Materialen" data-en="Materials">Materialen</span>
+      <div class="mat-list">
+        <div class="mat-r"><span class="mn">01</span><span class="mname">Canvas</span><span class="mtag" data-nl="Elk formaat" data-en="Any size">Elk formaat</span></div>
+        <div class="mat-r"><span class="mn">02</span><span class="mname">Acrylglas</span><span class="mtag" data-nl="Elk formaat" data-en="Any size">Elk formaat</span></div>
+        <div class="mat-r"><span class="mn">03</span><span class="mname">Aluminium</span><span class="mtag" data-nl="Elk formaat" data-en="Any size">Elk formaat</span></div>
+      </div>
+      <span class="or-label" data-nl="Contact & levering" data-en="Contact & delivery">Contact & levering</span>
+      <div class="facts">
+        <div class="fact"><span class="fk">Email</span><a href="/cdn-cgi/l/email-protection#224a474e4e4d6249414e504f4c0c435056" class="fv"><span class="__cf_email__" data-cfemail="026a676e6e6d4269616e706f6c2c637076">[email&#160;protected]</span></a></div>
+        <div class="fact"><span class="fk" data-nl="Levertijd" data-en="Delivery">Levertijd</span><span class="fv" data-nl="7–14 werkdagen" data-en="7–14 working days">7–14 werkdagen</span></div>
+        <div class="fact"><span class="fk" data-nl="Locatie" data-en="Location">Locatie</span><span class="fv">België</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about-s">
+    <div class="about-img rev">
+      <div class="about-cv">
+        <!-- Vervang canvas door: <img src="images/artist.jpg" alt="KCLRMN"> -->
+        <canvas id="aboutCv"></canvas>
+      </div>
+      <div class="about-deco"></div>
+    </div>
+    <div class="rev d1">
+      <p class="asup" data-nl="Over de artiest" data-en="About the artist">Over de artiest</p>
+      <h2 class="ah" data-nl="Digitaal van oorsprong.<br><em>Menselijk van hart.</em>" data-en="Digital by origin.<br><em>Human at heart.</em>">Digitaal van oorsprong.<br><em>Menselijk van hart.</em></h2>
+      <p class="ap" data-nl="Ik maak geen kunst voor musea. Ik maak kunst voor jouw muur." data-en="I don't make art for museums. I make art for your wall.">Ik maak geen kunst voor musea. Ik maak kunst voor jouw muur.</p>
+      <p class="ab" data-nl="KCLRMN is een Belgische digitale kunstenaar. Elk werk gemaakt met code, kleur en intentie — geprint op aanvraag in elk formaat en materiaal. Elk exemplaar gesigneerd. Gelimiteerde oplage." data-en="KCLRMN is a Belgian digital artist. Every piece made with code, colour and intention — printed on demand in any size and material. Every copy signed. Limited edition.">KCLRMN is een Belgische digitale kunstenaar. Elk werk gemaakt met code, kleur en intentie — geprint op aanvraag in elk formaat en materiaal. Elk exemplaar gesigneerd. Gelimiteerde oplage.</p>
+      <div class="asig">KCLRMN</div>
+    </div>
+  </section>
+
+  <!-- PROCESS -->
+  <section id="proc-s">
+    <div class="rev">
+      <p class="sup" data-nl="Hoe het werkt" data-en="How it works">Hoe het werkt</p>
+      <h2 class="section-h" data-nl="Van beeld tot <em>muur</em>" data-en="From image to <em>wall</em>">Van beeld tot <em>muur</em></h2>
+    </div>
+    <div class="steps">
+      <div class="rev"><span class="si">i.</span><div class="st" data-nl="Kies je werk" data-en="Choose">Kies je werk</div><p class="sb" data-nl="Blader en kies wat jou raakt." data-en="Browse and choose what moves you.">Blader en kies wat jou raakt.</p></div>
+      <div class="rev d1"><span class="si">ii.</span><div class="st" data-nl="Materiaal & maat" data-en="Material & size">Materiaal & maat</div><p class="sb" data-nl="Canvas, acryl of aluminium — elk formaat." data-en="Canvas, acrylic or aluminium — any size.">Canvas, acryl of aluminium — elk formaat.</p></div>
+      <div class="rev d2"><span class="si">iii.</span><div class="st" data-nl="Productie" data-en="Production">Productie</div><p class="sb" data-nl="Professionele printpartners, hoogste resolutie. Gesigneerd door de artiest." data-en="Professional print partners, highest resolution. Signed by the artist.">Professionele printpartners, hoogste resolutie. Gesigneerd door de artiest.</p></div>
+      <div class="rev d3"><span class="si">iv.</span><div class="st" data-nl="Geleverd" data-en="Delivered">Geleverd</div><p class="sb" data-nl="Veilig verpakt, snel thuis." data-en="Safely packaged, quickly home.">Veilig verpakt, snel thuis.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <span class="flogo">KCLRMN</span>
+    <span class="fcopy">© 2025 KCLRMN · <span data-nl="Alle rechten voorbehouden" data-en="All rights reserved">Alle rechten voorbehouden</span></span>
+    <a href="/cdn-cgi/l/email-protection#066e636a6a69466d656a746b6828677472" class="fcopy" style="transition:color .2s" onmouseover="this.style.color='var(--blue-d)'" onmouseout="this.style.color=''"><span class="__cf_email__" data-cfemail="c6aea3aaaaa986ada5aab4aba8e8a7b4b2">[email&#160;protected]</span></a>
+  </footer>
+</div>
+
+<!-- ══ GALLERY PAGE ════════════════════════ -->
+<div class="page" id="page-gallery">
+  <div class="gal-hero">
+    <div>
+      <p class="sup" data-nl="Collectie" data-en="Collection">Collectie</p>
+      <h1 class="gal-title" data-nl="Alle <em>werken</em>" data-en="All <em>works</em>">Alle <em>werken</em></h1>
+      <p class="gal-meta" id="galMeta"></p>
+    </div>
+    <a onclick="scrollToSection('order')" class="btn-solid" data-nl="Bestel een print" data-en="Order a print">Bestel een print</a>
+  </div>
+  <div class="filter-bar">
+    <span class="filter-label" data-nl="Stijl:" data-en="Style:">Stijl:</span>
+    <div class="filter-group">
+      <button class="f-chip active" data-filter="style" data-val="all"         data-nl="Alle"        data-en="All">Alle</button>
+      <button class="f-chip"        data-filter="style" data-val="abstract"    data-nl="Abstract"    data-en="Abstract">Abstract</button>
+      <button class="f-chip"        data-filter="style" data-val="geometrisch" data-nl="Geometrisch" data-en="Geometric">Geometrisch</button>
+      <button class="f-chip"        data-filter="style" data-val="organisch"   data-nl="Organisch"   data-en="Organic">Organisch</button>
+      <button class="f-chip"        data-filter="style" data-val="minimaal"    data-nl="Minimaal"    data-en="Minimal">Minimaal</button>
+    </div>
+    <div class="filter-divider"></div>
+    <span class="filter-label" data-nl="Materiaal:" data-en="Material:">Materiaal:</span>
+    <div class="filter-group">
+      <button class="f-chip active" data-filter="mat" data-val="all"       data-nl="Alle"      data-en="All">Alle</button>
+      <button class="f-chip"        data-filter="mat" data-val="canvas"    data-nl="Canvas"    data-en="Canvas">Canvas</button>
+      <button class="f-chip"        data-filter="mat" data-val="acryl"     data-nl="Acrylglas" data-en="Acrylic">Acrylglas</button>
+      <button class="f-chip"        data-filter="mat" data-val="aluminium" data-nl="Aluminium" data-en="Aluminium">Aluminium</button>
+    </div>
+  </div>
+  <div class="gal-grid" id="galGrid"></div>
+  <div class="gal-empty" id="galEmpty" data-nl="Geen werken gevonden." data-en="No works found.">Geen werken gevonden.</div>
+</div>
+
+<!-- ══ WORK PAGE ══════════════════════════ -->
+<div class="page" id="page-work">
+  <div class="work-layout">
+    <div class="work-img" id="wkImgWrap"></div>
+    <div class="work-info">
+      <div class="wk-breadcrumb">
+        <button class="wk-back" id="wkBack">← <span data-nl="Alle werken" data-en="All works">Alle werken</span></button>
+        <span class="wk-counter" id="wkCounter"></span>
+      </div>
+      <p class="wk-sup"   id="wkSup"></p>
+      <h1 class="wk-title" id="wkTitle"></h1>
+      <p class="wk-year"  id="wkYear"></p>
+      <p class="wk-desc"  id="wkDesc"></p>
+      <div class="wk-specs" id="wkSpecs"></div>
+      <button class="wk-cta" id="wkOrderBtn" data-nl="Bestel deze print" data-en="Order this print">Bestel deze print</button>
+      <p class="wk-note" data-nl="Elk formaat mogelijk. Na je aanvraag neem ik persoonlijk contact op." data-en="Any size possible. After your request I'll personally get in touch.">Elk formaat mogelijk. Na je aanvraag neem ik persoonlijk contact op.</p>
+      <div class="wk-nav">
+        <button class="wk-prev" id="wkPrev">← <span data-nl="Vorige" data-en="Previous">Vorige</span></button>
+        <button class="wk-next" id="wkNext"><span data-nl="Volgende" data-en="Next">Volgende</span> →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+/* ══ STATE ══════════════════════════════════════════ */
+const SLUGS = WORKS.map(w=>w.slug);
+let currentWork = null;
+let currentLang = 'nl';
+let activeFilters = {style:'all', mat:'all'};
+
+/* ══ GENERATIVE ART ════════════════════════════════ */
+function rng(seed){let s=seed>>>0;return()=>{s=Math.imul(1664525,s)+1013904223>>>0;return s/0xFFFFFFFF;};}
+function paintCanvas(cv,seed,style){
+  if(!cv)return;
+  const W=cv.offsetWidth||cv.parentElement?.offsetWidth||500;
+  const H=cv.offsetHeight||cv.parentElement?.offsetHeight||500;
+  cv.width=W;cv.height=H;
+  const ctx=cv.getContext('2d'),r=rng(seed);
+  const g=ctx.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,'#0d1a24');g.addColorStop(1,'#152534');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  const pal=['#8ec8e0','#4aa8cc','#b5dff0','#2a587a','#163a52','#f0ebe3'];
+  const c=(a=1)=>{const h=pal[Math.floor(r()*pal.length)];if(a===1)return h;const rr=parseInt(h.slice(1,3),16),gg=parseInt(h.slice(3,5),16),bb=parseInt(h.slice(5,7),16);return`rgba(${rr},${gg},${bb},${a})`;};
+  if(style==='waves'){for(let i=0;i<65;i++){ctx.beginPath();const y0=r()*H;ctx.moveTo(0,y0);let x=0;while(x<W){const nx=x+r()*W*.12+18;ctx.bezierCurveTo(x+r()*45,y0+(r()-.5)*H*.32,nx-r()*45,y0+(r()-.5)*H*.32,nx,y0+(r()-.5)*80);x=nx;}ctx.strokeStyle=c(r()*.18+.03);ctx.lineWidth=r()*2.2+.3;ctx.stroke();}}
+  else if(style==='geo'){for(let i=0;i<50;i++){const cx=r()*W,cy=r()*H,sz=r()*Math.min(W,H)*.28+12;const pts=3+Math.floor(r()*3);ctx.beginPath();for(let p=0;p<pts;p++){const a=(p/pts)*Math.PI*2+(r()-.5)*.6;const d=sz*(r()*.4+.55);p===0?ctx.moveTo(cx+Math.cos(a)*d,cy+Math.sin(a)*d):ctx.lineTo(cx+Math.cos(a)*d,cy+Math.sin(a)*d);}ctx.closePath();ctx.fillStyle=c(r()*.12+.02);ctx.strokeStyle=c(r()*.4+.06);ctx.lineWidth=r()+.2;ctx.fill();ctx.stroke();}}
+  else if(style==='circles'){const cx=W*.35+r()*W*.3,cy=H*.35+r()*H*.3;for(let i=0;i<28;i++){const rad=(i/28)*Math.max(W,H)*.9+r()*10;ctx.beginPath();for(let s=0;s<=72;s++){const a=(s/72)*Math.PI*2;const j=(r()-.5)*rad*.12;ctx.lineTo(cx+Math.cos(a)*(rad+j),cy+Math.sin(a)*(rad+j));}ctx.strokeStyle=c(r()*.28+.04);ctx.lineWidth=r()*1.8+.3;ctx.stroke();}}
+  else if(style==='grid'){const cols=10+Math.floor(r()*7),rows=Math.ceil(cols*H/W);const cw=W/cols,ch=H/rows;for(let co=0;co<cols;co++)for(let ro=0;ro<rows;ro++)if(r()>.42){ctx.fillStyle=c(r()*.28+.04);ctx.fillRect(co*cw+1,ro*ch+1,cw-2,ch-2);}}
+  else{for(let i=0;i<600;i++){ctx.beginPath();ctx.arc(r()*W,r()*H,r()*2.8+.4,0,Math.PI*2);ctx.fillStyle=c(r()*.48+.08);ctx.fill();}}
+  const v=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.1,W/2,H/2,Math.max(W,H)*.85);
+  v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.36)');
+  ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+}
+function renderArt(wrap,work){
+  wrap.innerHTML='';
+  if(work.image){
+    const img=document.createElement('img');
+    img.src=work.image;
+    img.alt=currentLang==='nl'?work.titleNl:work.titleEn;
+    img.style.cssText='width:100%;height:100%;object-fit:cover;display:block';
+    img.onerror=()=>{wrap.innerHTML='';const cv=document.createElement('canvas');cv.style.cssText='position:absolute;inset:0;width:100%;height:100%';wrap.appendChild(cv);setTimeout(()=>paintCanvas(cv,work.seed,work.style),30);};
+    wrap.appendChild(img);
+  } else {
+    const cv=document.createElement('canvas');
+    cv.style.cssText='position:absolute;inset:0;width:100%;height:100%';
+    wrap.appendChild(cv);
+    setTimeout(()=>paintCanvas(cv,work.seed,work.style),30);
+  }
+}
+
+/* ══ CALCULATOR ════════════════════════════════════ */
+let calcState={workSlug:WORKS[0].slug, matKey:'canvas', w:60, h:80, preset:2};
+
+function buildCalculator(){
+  /* work selector */
+  const ws=document.getElementById('calcWorkSel');
+  if(!ws)return;
+  ws.innerHTML='';
+  WORKS.forEach(w=>{
+    const o=document.createElement('option');
+    o.value=w.slug;
+    o.textContent=currentLang==='nl'?w.titleNl:w.titleEn;
+    ws.appendChild(o);
+  });
+  buildSizeGrid();
+  buildMatTabs();
+  calcUpdate();
+}
+
+function buildSizeGrid(){
+  const grid=document.getElementById('sizeGrid');
+  if(!grid)return;
+  grid.innerHTML='';
+  PRICING.presetSizes.forEach((s,i)=>{
+    const price=calcPrice(s.w,s.h,calcState.matKey);
+    const btn=document.createElement('button');
+    btn.className='size-btn'+(i===calcState.preset?' active':'');
+    btn.innerHTML=`<span class="sb-cm">${s.label}</span><span class="sb-price">€${price.toLocaleString('nl-BE')}</span>`;
+    btn.onclick=()=>{
+      calcState.preset=i; calcState.w=s.w; calcState.h=s.h;
+      document.getElementById('calcW').value='';
+      document.getElementById('calcH').value='';
+      grid.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      calcUpdate();
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function buildMatTabs(){
+  const tabs=document.getElementById('matTabs');
+  if(!tabs)return;
+  tabs.innerHTML='';
+  Object.keys(PRICING.materialMultiplier).forEach(key=>{
+    const lbl=PRICING.materialLabel[key][currentLang];
+    const mult=PRICING.materialMultiplier[key];
+    const pct=mult===1?(currentLang==='nl'?'Basis':'Base'):`+${Math.round((mult-1)*100)}%`;
+    const tab=document.createElement('button');
+    tab.className='mat-tab'+(key===calcState.matKey?' active':'');
+    tab.innerHTML=`<span class="mt-name">${lbl}</span><span class="mt-pct">${pct}</span>`;
+    tab.onclick=()=>{
+      calcState.matKey=key;
+      tabs.querySelectorAll('.mat-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      buildSizeGrid();
+      calcUpdate();
+    };
+    tabs.appendChild(tab);
+  });
+}
+
+function calcCustom(){
+  const w=parseInt(document.getElementById('calcW').value);
+  const h=parseInt(document.getElementById('calcH').value);
+  if(w>=20&&h>=20&&w<=300&&h<=300){
+    calcState.w=w; calcState.h=h; calcState.preset=-1;
+    document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('active'));
+    calcUpdate();
+  }
+}
+
+function calcUpdate(){
+  const ws=document.getElementById('calcWorkSel');
+  if(ws&&ws.value) calcState.workSlug=ws.value;
+  const work=WORKS.find(x=>x.slug===calcState.workSlug)||WORKS[0];
+  const price=calcPrice(calcState.w,calcState.h,calcState.matKey);
+  const lbl=PRICING.materialLabel[calcState.matKey][currentLang];
+  const desc=PRICING.materialDesc[calcState.matKey][currentLang];
+  document.getElementById('calcWorkName').textContent=currentLang==='nl'?work.titleNl:work.titleEn;
+  document.getElementById('calcMatName').textContent=lbl;
+  document.getElementById('calcSizeName').textContent=`${calcState.w} × ${calcState.h} cm`;
+  document.getElementById('calcMatDesc').textContent=desc;
+  document.getElementById('calcPriceNum').textContent=price.toLocaleString('nl-BE');
+  const ed=document.getElementById('calcEdition');
+  if(ed&&work.edition){
+    ed.innerHTML=currentLang==='nl'
+      ?`<strong>Gelimiteerde editie</strong> — max. ${work.edition} exemplaren per formaat. Elk stuk gesigneerd.`
+      :`<strong>Limited edition</strong> — max. ${work.edition} copies per size. Each piece signed.`;
+  } else if(ed) ed.textContent='';
+  const prev=document.getElementById('calcPreview');
+  if(prev) renderArt(prev,work);
+}
+
+function calcOrder(){
+  const work=WORKS.find(x=>x.slug===calcState.workSlug)||WORKS[0];
+  route('home');
+  setTimeout(()=>{
+    const sel=document.getElementById('workSel');
+    if(sel)[...sel.options].forEach(o=>{if(o.value===calcState.workSlug)o.selected=true;});
+    const fmt=document.getElementById('orderFmtInput');
+    if(fmt) fmt.value=`${calcState.w} × ${calcState.h} cm`;
+    const matSel=document.getElementById('orderMatSel');
+    if(matSel)[...matSel.options].forEach(o=>{if(o.value===calcState.matKey)o.selected=true;});
+    document.getElementById('order').scrollIntoView({behavior:'smooth'});
+  },150);
+}
+
+/* ══ HOME STRIP ════════════════════════════════════ */
+const SHAPES=['l','p','t','sq','p','l'];
+function buildHomeStrip(){
+  const track=document.getElementById('gwTrack');
+  if(!track)return;
+  track.innerHTML='';
+  WORKS.forEach((w,i)=>{
+    const shape=SHAPES[i%SHAPES.length];
+    const title=currentLang==='nl'?w.titleNl:w.titleEn;
+    const div=document.createElement('div');
+    div.className=`gi ${shape}`;
+    const wrap=document.createElement('div');
+    wrap.style.cssText='position:absolute;inset:0';
+    div.appendChild(wrap);
+    renderArt(wrap,w);
+    div.insertAdjacentHTML('beforeend',`
+      <div class="gi-over"><div class="gi-info">
+        <span class="gi-name">${title}</span>
+        <span class="gi-mat">${w.mat}</span>
+        <div class="gi-btns">
+          <button class="gi-view" onclick="route('work','${w.slug}')">${currentLang==='nl'?'Bekijk →':'View →'}</button>
+          <button class="gi-order" onclick="scrollToSection('order','${w.slug}')">${currentLang==='nl'?'Bestel':'Order'}</button>
+        </div>
+      </div></div>`);
+    track.appendChild(div);
+  });
+}
+
+/* ══ FORM SELECT ═══════════════════════════════════ */
+function buildWorkSelect(sel){
+  if(!sel)return;
+  sel.innerHTML='';
+  const blank=document.createElement('option');
+  blank.value='';
+  blank.textContent=currentLang==='nl'?'— Kies een werk —':'— Choose a piece —';
+  sel.appendChild(blank);
+  WORKS.forEach(w=>{
+    const o=document.createElement('option');
+    o.value=w.slug;
+    o.textContent=currentLang==='nl'?w.titleNl:w.titleEn;
+    sel.appendChild(o);
+  });
+  const custom=document.createElement('option');
+  custom.value='maatwerk';
+  custom.textContent=currentLang==='nl'?'Maatwerk / ander':'Custom / other';
+  sel.appendChild(custom);
+}
+
+/* ══ GALLERY PAGE ══════════════════════════════════ */
+function buildGalleryGrid(){
+  const grid=document.getElementById('galGrid');
+  if(!grid)return;
+  grid.innerHTML='';
+  WORKS.forEach(w=>{
+    const title=currentLang==='nl'?w.titleNl:w.titleEn;
+    const item=document.createElement('div');
+    item.className='gal-item';
+    item.style.setProperty('--ar',w.ar);
+    item.dataset.style=w.styles.join(' ');
+    item.dataset.mat=w.matKey;
+    const artWrap=document.createElement('div');
+    artWrap.style.cssText='position:absolute;inset:0';
+    item.appendChild(artWrap);
+    renderArt(artWrap,w);
+    item.insertAdjacentHTML('beforeend',`
+      <div class="gal-over">
+        <div class="gal-badge">${w.styles.map(s=>`<span class="badge">${s}</span>`).join('')}<span class="badge">${w.mat}</span></div>
+        <div class="gal-foot">
+          <span class="gal-n">${title}</span>
+          <span class="gal-m">${w.mat}</span>
+          <div class="gal-actions">
+            <button class="gal-view"  onclick="route('work','${w.slug}')">${currentLang==='nl'?'Bekijk →':'View →'}</button>
+            <button class="gal-order" onclick="scrollToSection('order','${w.slug}')">${currentLang==='nl'?'Bestel':'Order'}</button>
+          </div>
+        </div>
+      </div>`);
+    grid.appendChild(item);
+  });
+  applyFilters();
+}
+
+function applyFilters(){
+  const items=document.querySelectorAll('.gal-item');
+  let visible=0;
+  items.forEach(item=>{
+    const ok=(activeFilters.style==='all'||item.dataset.style.includes(activeFilters.style))
+           &&(activeFilters.mat  ==='all'||item.dataset.mat===activeFilters.mat);
+    item.classList.toggle('hidden',!ok);
+    if(ok)visible++;
+  });
+  document.getElementById('galEmpty').style.display=visible===0?'block':'none';
+  const meta=document.getElementById('galMeta');
+  if(meta) meta.textContent=currentLang==='nl'
+    ?`${visible} werk${visible!==1?'en':''} — filter op stijl of materiaal`
+    :`${visible} work${visible!==1?'s':''} — filter by style or material`;
+}
+
+document.querySelectorAll('.f-chip').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const g=btn.dataset.filter;
+    document.querySelectorAll(`[data-filter="${g}"]`).forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilters[g]=btn.dataset.val;
+    applyFilters();
+  });
+});
+
+/* ══ ROUTING ═══════════════════════════════════════ */
+function route(page,slug){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  window.scrollTo(0,0);
+  document.getElementById('nav-gallery')?.classList.toggle('active-link',page==='gallery'||page==='work');
+  if(page==='home'){
+    buildHomeStrip();
+    buildWorkSelect(document.getElementById('workSel'));
+    buildCalculator();
+    setTimeout(()=>{
+      const ac=document.getElementById('aboutCv');
+      if(ac) paintCanvas(ac,4429,'circles');
+      document.querySelectorAll('.rev:not(.in)').forEach(el=>ro.observe(el));
+    },120);
+  }
+  if(page==='gallery') buildGalleryGrid();
+  if(page==='work'&&slug) openWork(slug);
+}
+
+function openWork(slug){
+  const w=WORKS.find(x=>x.slug===slug);if(!w)return;
+  currentWork=slug;
+  const idx=SLUGS.indexOf(slug),l=currentLang;
+  document.getElementById('wkCounter').textContent=`${idx+1} / ${SLUGS.length}`;
+  document.getElementById('wkSup').textContent=w.mat;
+  document.getElementById('wkTitle').textContent=l==='nl'?w.titleNl:w.titleEn;
+  document.getElementById('wkYear').textContent=w.year;
+  document.getElementById('wkDesc').textContent=l==='nl'?w.descNl:w.descEn;
+  const minPrice=calcPrice(PRICING.presetSizes[0].w,PRICING.presetSizes[0].h,w.matKey);
+  document.getElementById('wkSpecs').innerHTML=`
+    <div class="wk-spec"><span class="wsk">${l==='nl'?'Materiaal':'Material'}</span><span class="wsv">${w.mat}</span></div>
+    <div class="wk-spec"><span class="wsk">${l==='nl'?'Formaat':'Size'}</span><span class="wsv">${l==='nl'?'Elk formaat mogelijk':'Any size possible'}</span></div>
+    <div class="wk-spec"><span class="wsk">${l==='nl'?'Prijs vanaf':'Price from'}</span><span class="wsv">€${minPrice.toLocaleString('nl-BE')}</span></div>
+    ${w.edition?`<div class="wk-spec"><span class="wsk">${l==='nl'?'Editie':'Edition'}</span><span class="wsv">${l==='nl'?`Max. ${w.edition} ex.`:`Max. ${w.edition} pcs.`}</span></div>`:''}
+    <div class="wk-spec"><span class="wsk">${l==='nl'?'Jaar':'Year'}</span><span class="wsv">${w.year}</span></div>`;
+  const prev=SLUGS[(idx-1+SLUGS.length)%SLUGS.length];
+  const next=SLUGS[(idx+1)%SLUGS.length];
+  document.getElementById('wkPrev').onclick=()=>openWork(prev);
+  document.getElementById('wkNext').onclick=()=>openWork(next);
+  document.getElementById('wkBack').onclick=()=>route('gallery');
+  document.getElementById('wkOrderBtn').onclick=()=>scrollToSection('order',slug);
+  renderArt(document.getElementById('wkImgWrap'),w);
+}
+
+function scrollToSection(id,slug){
+  if(!document.getElementById('page-home').classList.contains('active')) route('home');
+  if(slug){
+    setTimeout(()=>{
+      const sel=document.getElementById('workSel');
+      if(sel)[...sel.options].forEach(o=>{if(o.value===slug)o.selected=true;});
+    },120);
+  }
+  setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth'}),150);
+}
+
+/* ══ FORM ══════════════════════════════════════════ */
+document.getElementById('orderForm')?.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const btn=document.getElementById('formBtn');
+  const ok=document.getElementById('formSuccess');
+  btn.disabled=true;
+  btn.textContent=currentLang==='nl'?'Bezig...':'Sending...';
+  try{
+    const res=await fetch(e.target.action,{method:'POST',body:new FormData(e.target),headers:{'Accept':'application/json'}});
+    if(res.ok){e.target.reset();ok.classList.add('show');btn.style.display='none';}
+    else{btn.disabled=false;btn.textContent=currentLang==='nl'?'Verstuur aanvraag':'Send request';alert(currentLang==='nl'?'Er ging iets mis. Probeer opnieuw.':'Something went wrong.');}
+  }catch{btn.disabled=false;btn.textContent=currentLang==='nl'?'Verstuur aanvraag':'Send request';}
+});
+
+/* ══ CURSOR ════════════════════════════════════════ */
+const cur=document.getElementById('cur');
+let mx=0,my=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px';});
+document.addEventListener('mouseover',e=>{cur.classList.toggle('big',!!e.target.closest('.gi,.gal-item,.work-img'));});
+
+/* ══ NAV ═══════════════════════════════════════════ */
+window.addEventListener('scroll',()=>document.getElementById('mainNav').classList.toggle('scrolled',scrollY>40),{passive:true});
+const burger=document.getElementById('burgerBtn');
+const drawer=document.getElementById('navDrawer');
+function closeDrawer(){burger.classList.remove('open');drawer.classList.remove('open')}
+burger.addEventListener('click',()=>{burger.classList.toggle('open');drawer.classList.toggle('open');});
+document.addEventListener('click',e=>{if(!burger.contains(e.target)&&!drawer.contains(e.target))closeDrawer();});
+
+/* ══ LANG ══════════════════════════════════════════ */
+document.getElementById('langBtn').addEventListener('click',function(){
+  currentLang=currentLang==='nl'?'en':'nl';
+  this.textContent=currentLang==='nl'?'EN':'NL';
+  document.querySelectorAll('[data-nl]').forEach(el=>{const v=el.getAttribute('data-'+currentLang);if(v)el.innerHTML=v;});
+  buildCalculator();
+  buildHomeStrip();
+  buildWorkSelect(document.getElementById('workSel'));
+});
+
+/* ══ REVEAL ════════════════════════════════════════ */
+const ro=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in');}),{threshold:.1});
+document.querySelectorAll('.rev').forEach(el=>ro.observe(el));
+
+/* ══ DRAG GALLERY ══════════════════════════════════ */
+(function(){
+  const track=document.getElementById('gwTrack');
+  const outer=document.getElementById('gwOuter');
+  if(!track||!outer)return;
+  let pos=0,tgt=0,drag=false,sx=0,sp=0;
+  const max=()=>Math.max(0,track.scrollWidth-outer.clientWidth+96);
+  track.addEventListener('mousedown',e=>{drag=true;sx=e.clientX;sp=tgt;track.style.cursor='grabbing';e.preventDefault();});
+  window.addEventListener('mouseup',()=>{drag=false;track.style.cursor='';});
+  window.addEventListener('mousemove',e=>{if(!drag)return;tgt=Math.max(0,Math.min(max(),sp-(e.clientX-sx)));});
+  outer.addEventListener('wheel',e=>{e.preventDefault();tgt=Math.max(0,Math.min(max(),tgt+e.deltaY*.7));},{passive:false});
+  let tx=0;
+  track.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;sp=tgt;},{passive:true});
+  track.addEventListener('touchmove',e=>{tgt=Math.max(0,Math.min(max(),sp+tx-e.touches[0].clientX));e.preventDefault();},{passive:false});
+  (function lerp(){pos+=(tgt-pos)*.09;track.style.transform=`translateX(${-pos}px)`;requestAnimationFrame(lerp);})();
+})();
+
+/* ══ INIT ══════════════════════════════════════════ */
+(function(){
+  /* Hide loader and boot the page */
+  function init(){
+    buildHomeStrip();
+    buildWorkSelect(document.getElementById('workSel'));
+    buildCalculator();
+    document.getElementById('page-home').classList.add('active');
+    setTimeout(()=>{
+      const ac = document.getElementById('aboutCv');
+      if(ac) paintCanvas(ac, 4429, 'circles');
+      document.querySelectorAll('.rev:not(.in)').forEach(el => ro.observe(el));
+    }, 120);
+    const loader = document.getElementById('loader');
+    if(loader) loader.classList.add('out');
+  }
+
+  /* Wait for fonts then init — avoids layout shift during canvas paint */
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(init);
+  } else {
+    window.addEventListener('load', init);
+  }
+})();
+</script>
+</body>
+</html>
